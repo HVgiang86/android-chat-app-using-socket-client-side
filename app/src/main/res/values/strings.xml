@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Client Chat App</string>
+    <string name="ip_hint">IP</string>
+    <string name="port_hint">Port</string>
+    <string name="connect_btn">Connect</string>
+    <string name="message">Message</string>
+    <string name="send">Send</string>
+    <string name="default_port">3000</string>
+    <string name="default_ip">192.168.0.102</string>
+</resources>
