@@ -23,10 +23,12 @@ import com.example.clientchatapp.socket.MySocket;
 import com.example.clientchatapp.socket.OnNewMessageListener;
 import com.example.clientchatapp.utilities.FilePathGetter;
 
+import java.io.File;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private final MySocket socket = MySocket.getInstance();
+    private final int MAX_FILE_SIZE = 50 * 1024 * 1024;
     private EditText messageEdt;
     private RecyclerView recyclerView;
     private MessageManager messageManager;
@@ -37,18 +39,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //After connect to socket server, start task to reading incoming data from server
         socket.startReadingStream();
+
         socket.setDisconnectListener((socket) -> {
             Toast.makeText(getApplicationContext(), "Disconnected!", Toast.LENGTH_SHORT).show();
             finish();
         });
-
         socket.setNewMessageListener(new OnNewMessageListener());
 
         messageEdt = findViewById(R.id.message_edt);
         recyclerView = findViewById(R.id.recycler_view);
         attachFileBtn = findViewById(R.id.attach_file_btn);
 
+        //ask for external storage permission
         if (shouldAskPermissions()) {
             askPermissions();
         }
@@ -92,8 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode != 2000 || resultCode != RESULT_OK)
-            return;
+        if (requestCode != 2000 || resultCode != RESULT_OK) return;
         openFileChooser(data);
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -103,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
         if (data != null) {
             Uri fileUri = data.getData();
             Log.i("FILE CHOSEN LOG", "Uri: " + fileUri);
-
 
             try {
                 src = FilePathGetter.getPath(this, fileUri);
@@ -120,12 +122,16 @@ public class MainActivity extends AppCompatActivity {
         androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
         builder.setTitle("Send file?").setMessage("Do you want to send local file?\nFile path: " + src);
         builder.setPositiveButton("Ok", (dialog, which) -> {
+            File file = new File(filePath, filename);
+            if (file.length() > MAX_FILE_SIZE) {
+                Toast.makeText(this, "File must be lower than 50MB", Toast.LENGTH_SHORT).show();
+                return;
+            }
             socket.emitFile(filePath, filename);
             messageManager.addMessage(new Message(filePath, true, true));
         });
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel()
-        );
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
         builder.create().show();
     }
 
@@ -135,17 +141,14 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
     }
+
     protected boolean shouldAskPermissions() {
         return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
     }
 
     @TargetApi(23)
     protected void askPermissions() {
-        String[] permissions = {
-                "android.permission.MANAGE_EXTERNAL_STORAGE",
-                "android.permission.READ_EXTERNAL_STORAGE",
-                "android.permission.WRITE_EXTERNAL_STORAGE"
-        };
+        String[] permissions = {"android.permission.MANAGE_EXTERNAL_STORAGE", "android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"};
         int requestCode = 200;
         requestPermissions(permissions, requestCode);
     }

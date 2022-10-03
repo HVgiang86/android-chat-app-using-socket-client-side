@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 
+//This async task used to setup a connection to socket server
 public class SocketConnectAsync extends AsyncTask<String, Void, Void> {
     private final SingleSocket mSocket;
     WeakReference<Context> contextWeakReference;

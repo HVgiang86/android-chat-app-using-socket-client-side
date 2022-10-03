@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.Socket;
 
 public class OnNewMessageListener implements IO.OnNewMessageListener {
     private static final String TAG = "New Message";
@@ -25,7 +24,8 @@ public class OnNewMessageListener implements IO.OnNewMessageListener {
             saveFileFromStream(messagePackage);
         } else {
             if (messagePackage.getEvent().equalsIgnoreCase(IO.SEND_MESSAGE)) {
-                Message message = new Message(messagePackage.getMessage(), false, false);
+                String sender = messagePackage.getSender();
+                Message message = new Message(sender, messagePackage.getMessage(), false, false);
                 MessageManager.getInstance().addMessage(message);
             } else {
                 socket.disconnectListener.onDisconnect(socket);
@@ -41,20 +41,22 @@ public class OnNewMessageListener implements IO.OnNewMessageListener {
         Log.d(TAG, "File name: " + message.getMessage());
         Log.d(TAG, "File path: " + dir.getPath());
 
-        if(dir.exists()) {
+        if (dir.exists()) {
             dir.mkdirs();
         }
 
         try {
-            File file = new File(dir.getPath(),filename);
-
+            File file = new File(dir.getPath(), filename);
 
             byte[] bytes = message.getData();
             FileOutputStream fos = new FileOutputStream(file);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
+
             bos.write(bytes);
             bos.close();
-            Message msg = new Message(file.getPath(), false, true);
+
+            String sender = message.getSender();
+            Message msg = new Message(sender, file.getPath(), false, true);
             MessageManager.getInstance().addMessage(msg);
         } catch (FileNotFoundException e) {
             e.printStackTrace();

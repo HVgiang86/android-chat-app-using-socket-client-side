@@ -50,16 +50,27 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        String content = messageList.get(position).getContent();
-        holder.contentTv.setText(content);
-        Log.d("ADAPTER LOG", "content: " + messageList.get(position).getContent());
-        if (getItemViewType(position) == SERVER_FILE_TYPE || getItemViewType(position) == CLIENT_FILE_TYPE) {
+        Message message = messageList.get(position);
+        Log.d("Adapter log", "Item: Sender: " + message.getSender() + " Message: " + message.getContent());
+        if (getItemViewType(position) != SERVER_FILE_TYPE || getItemViewType(position) != SERVER_FILE_TYPE) {
+            String sender = message.getSender();
+            if (sender != null)
+                holder.senderTv.setText(sender.trim());
 
+        }
+
+        String content = message.getContent().trim();
+        if (getItemViewType(position) == CLIENT_MESSAGE_TYPE || getItemViewType(position) == SERVER_MESSAGE_TYPE)
+            holder.contentTv.setText(content);
+
+        if (getItemViewType(position) == SERVER_FILE_TYPE || getItemViewType(position) == CLIENT_FILE_TYPE) {
+            int i = content.lastIndexOf("/");
+            String filename = content.substring(i + 1);
+            holder.contentTv.setText(filename);
             holder.contentTv.setOnClickListener((v) -> {
                 showFileChooser(content);
-                Log.d("Adapter log", "TEXT FILE CLICKED!");
+                Log.d("Adapter log", "FILE CLICKED!");
             });
-
         }
     }
 
@@ -79,15 +90,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         }
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView contentTv;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-            contentTv = itemView.findViewById(R.id.message_content);
-        }
-    }
-
     private void showFileChooser(String filePath) {
 
         String extension = filePath.substring(filePath.lastIndexOf(".") + 1);
@@ -97,25 +99,28 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         baseIntent.setType(type);
 
         int i = filePath.lastIndexOf("/");
-        Uri selectedUri = Uri.parse(filePath.substring(0,i));
-        Log.d("Adapter Log","test path: " + selectedUri);
+        Uri selectedUri = Uri.parse(filePath.substring(0, i));
+        Log.d("Adapter Log", "test path: " + selectedUri);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(selectedUri, "*/*");
 
-        if (intent.resolveActivityInfo(context.getPackageManager(), 0) != null)
-        {
+        if (intent.resolveActivityInfo(context.getPackageManager(), 0) != null) {
             context.startActivity(intent);
-        }
-        else
-        {
+        } else {
             // if you reach this place, it means there is no any file
             // explorer app installed on your device
             Toast.makeText(context.getApplicationContext(), "File unable to open", Toast.LENGTH_LONG).show();
         }
-        /*if (baseIntent.resolveActivity(context.getPackageManager()) != null) {
-            context.startActivity(baseIntent);
-        } else {
+    }
 
-        }*/
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView contentTv;
+        public TextView senderTv;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            contentTv = itemView.findViewById(R.id.message_content);
+            senderTv = itemView.findViewById(R.id.sender_name);
+        }
     }
 }

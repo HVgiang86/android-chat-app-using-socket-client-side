@@ -18,7 +18,9 @@ public abstract class SingleSocket {
     public IO.OnConnectListener onConnectListener;
     public IO.OnDisconnectListener disconnectListener;
     public IO.OnNewMessageListener newMessageListener;
+
     protected Socket socket;
+
     public void createSocket(int port) {
         socket = new Socket();
         try {

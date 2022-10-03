@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 public class MySocket extends SingleSocket {
     //Singleton
     private final static MySocket INSTANCE = new MySocket();
+    private String username;
 
     private MySocket() {
 
@@ -22,8 +23,17 @@ public class MySocket extends SingleSocket {
         return INSTANCE;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public void emitMessage(String message) {
         MessagePackageBuilder builder = new MessagePackageBuilder();
+        builder.setSender(username);
         builder.setEvent(IO.SEND_MESSAGE);
         builder.setType(IO.SEND_MESSAGE);
         builder.setMessage(message);
@@ -33,6 +43,7 @@ public class MySocket extends SingleSocket {
     public void emitFile(String filePath, String filename) {
         File file = new File(filePath);
         MessagePackageBuilder builder = new MessagePackageBuilder();
+        builder.setSender(username);
         builder.setMessage(filename);
         builder.setEvent(IO.SEND_FILE);
         builder.setType(IO.SEND_FILE);

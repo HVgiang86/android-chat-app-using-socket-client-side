@@ -12,17 +12,15 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+//Message Package Builder used to build an message package easier
 public class MessagePackageBuilder {
     public final static int MAX_FILE_SIZE_IN_BYTE = 50 * 1024 * 1024;
+    private String sender;
     private String event;
     private boolean isFile;
     private String message;
     private byte[] data = null;
     private int dataSizeInByte;
-
-    public String getEvent() {
-        return event;
-    }
 
     public void setEvent(String event) {
         this.event = event;
@@ -30,6 +28,10 @@ public class MessagePackageBuilder {
 
     public void setType(String type) {
         isFile = type.equalsIgnoreCase("file") || type.equalsIgnoreCase(IO.SEND_FILE);
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
     public void setMessage(String message) {
@@ -47,22 +49,13 @@ public class MessagePackageBuilder {
     public boolean setDataFromFile(File file) throws FileNotFoundException {
         dataSizeInByte = (int) file.length();
         message = file.getName();
-        Log.d("test file","file name: " + file.getName() + " size: " + dataSizeInByte);
         data = new byte[(int) dataSizeInByte];
+
+        //Max size limit of file is 50MB
+        //Use file input stream to read file from storage and convert it into an array of bytes
         if (dataSizeInByte > MAX_FILE_SIZE_IN_BYTE) {
             throw new FileNotFoundException("File size > 50Mb");
         }
-
-        /*try {
-            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-            bis.read(data);
-            for (int i = 0; i < dataSizeInByte; ++i) {
-                Log.d("test file","byte: " + data[i]);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
         try {
             data = new byte[(int) dataSizeInByte];
             FileInputStream fis = new FileInputStream(file);
@@ -77,8 +70,8 @@ public class MessagePackageBuilder {
 
     public MessagePackage build() {
         if (isFile) {
-            return new MessagePackage(event, true, message, data, dataSizeInByte);
+            return new MessagePackage(sender, event, true, message, data, dataSizeInByte);
         }
-        return new MessagePackage(event, false, message);
+        return new MessagePackage(sender, event, false, message);
     }
 }

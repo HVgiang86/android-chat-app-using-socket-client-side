@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+//This task used to read incoming data from socketserver
 public class ReadAsyncTask extends AsyncTask<Void, Void, Void> {
     private final static String TAG = "Data Received Tag";
     private final SingleSocket socket;
@@ -24,6 +25,11 @@ public class ReadAsyncTask extends AsyncTask<Void, Void, Void> {
 
     @Override
     protected Void doInBackground(Void... voids) {
+        //Here we looking for incoming data from socket
+        //Every time has data on input stream, we will read it until end of stream
+        //Incoming message package structured in the following order: event -> sender -> fileSize (if file)
+        // -> message -> data in byte array (if file)
+        //kep running this task until an DISCONNECT event was sent to
         try {
             while (true) {
                 InputStream is = socket.getSocket().getInputStream();
@@ -32,28 +38,41 @@ public class ReadAsyncTask extends AsyncTask<Void, Void, Void> {
 
                 Log.d(TAG, "New Data");
                 MessagePackageBuilder builder = new MessagePackageBuilder();
+
+                //read event
                 String event = dis.readLine();
                 builder.setEvent(event);
+
+                //read sender name
+                String sender = dis.readUTF();
+                builder.setSender(sender);
+
                 Log.d(TAG, "Event: " + event);
+                Log.d(TAG, "Sender: " + sender);
+
                 if (event.equalsIgnoreCase(IO.SEND_FILE)) {
                     builder.setType(IO.SEND_FILE);
 
+                    //read file size
                     int fileSize = Integer.parseInt(dis.readLine());
                     Log.d(TAG, "file size: " + fileSize);
+
+                    //read filename as message properties
                     String filename = dis.readLine();
                     Log.d(TAG, "Filename: " + filename);
+
+                    //read data of file in byte array
                     byte[] bytes = new byte[fileSize];
-                    int count  = 0;
                     //dis.read(bytes);
                     dis.readFully(bytes);
                     Log.d(TAG, "byte array done!");
+
                     builder.setMessage(filename);
                     builder.setData(bytes);
                     builder.setDataSizeInByte(fileSize);
-
-
                 } else {
                     builder.setType(IO.SEND_MESSAGE);
+                    //read message
                     String message = dis.readUTF();
                     //String message = br.readLine();
                     builder.setMessage(message);
@@ -61,6 +80,8 @@ public class ReadAsyncTask extends AsyncTask<Void, Void, Void> {
 
                 MessagePackage messagePackage = builder.build();
                 Log.d(TAG, "Data received: " + messagePackage);
+
+                //if meet disconnect event, finish read task
                 if (messagePackage.getEvent().equalsIgnoreCase(IO.CLIENT_DISCONNECT)) {
                     socket.disconnectListener.onDisconnect(socket);
                     onDestroy();
